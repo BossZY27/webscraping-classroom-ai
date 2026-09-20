@@ -1,0 +1,16 @@
+﻿fastapi==0.111.0
+uvicorn==0.30.1
+sqlalchemy==2.0.30
+google-api-python-client==2.131.0
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.0
+apscheduler==3.10.4
+python-dotenv==1.0.1
+pydantic==2.7.2
+pydantic-settings==2.2.1
+jinja2==3.1.4
+aiofiles==23.2.1
+PyPDF2>=3.0.0
+google-generativeai>=0.8.0
+openai>=1.30.0
+requests>=2.31.0

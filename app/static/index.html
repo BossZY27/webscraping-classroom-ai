@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Scraper</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <h2>Scraper</h2>
+            </div>
+
+            <nav>
+                <a href="#" class="nav-item active" data-tab="courses">
+                    <i class="fa-solid fa-book"></i> Courses
+                </a>
+                <a href="#" class="nav-item" data-tab="files">
+                    <i class="fa-solid fa-folder"></i> Files
+                </a>
+                <a href="#" class="nav-item" data-tab="schedule">
+                    <i class="fa-solid fa-clock"></i> Schedule
+                </a>
+                <a href="#" class="nav-item" data-tab="ai-settings">
+                    <i class="fa-solid fa-gear"></i> AI Settings
+                </a>
+            </nav>
+
+            <div class="auth-status" id="auth-status-container">
+                <p>Checking status...</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <h1 id="page-title">Courses</h1>
+                <div class="actions">
+                    <button id="btn-sync-all" class="btn btn-primary">
+                        <i class="fa-solid fa-rotate"></i> Sync All
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- Courses Tab -->
+                <div id="tab-courses" class="tab-pane active">
+                    <div class="loading" id="courses-loading" style="display: none;">Loading courses...</div>
+                    <div class="grid" id="courses-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Files Tab -->
+                <div id="tab-files" class="tab-pane">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Filename</th>
+                                    <th>Course</th>
+                                    <th>Size</th>
+                                    <th>Downloaded</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="files-table-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Schedule Tab -->
+                <div id="tab-schedule" class="tab-pane">
+                    <div class="card schedule-form">
+                        <h3>Add Schedule</h3>
+                        <form id="form-schedule">
+                            <div class="form-group">
+                                <label>Course</label>
+                                <select id="schedule-course" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Cron Expression (e.g. 0 9 * * 1 for Mon 9am)</label>
+                                <input type="text" id="schedule-cron" placeholder="* * * * *" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Schedule</button>
+                        </form>
+                    </div>
+
+                    <h3 class="mt-4">Active Schedules</h3>
+                    <div class="grid" id="schedule-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- AI Settings Tab -->
+                <div id="tab-ai-settings" class="tab-pane">
+                    <div class="card schedule-form">
+                        <h3>Bring Your Own AI Configuration</h3>
+                        <form id="form-ai-settings">
+                            <div class="form-group">
+                                <label>AI Provider</label>
+                                <select id="ai-provider" required>
+                                    <option value="gemini">Google Gemini (Recommended for free tier)</option>
+                                    <option value="openai">OpenAI (ChatGPT Plus/API)</option>
+                                    <option value="ollama">Ollama (Local LLM)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="group-api-key">
+                                <label>API Key</label>
+                                <input type="password" id="ai-api-key" placeholder="Enter your API Key">
+                                <small style="color:var(--text-muted);display:block;margin-top:0.5rem;">Your key is stored locally in the SQLite database.</small>
+                            </div>
+                            <div class="form-group" id="group-endpoint" style="display:none;">
+                                <label>Ollama Endpoint URL</label>
+                                <input type="text" id="ai-endpoint" placeholder="http://localhost:11434">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2><i class="fa-brands fa-google"></i> Google Login Required</h2>
+            </div>
+            <div class="modal-body">
+                <p>To access your Google Classroom and Drive, this application needs authorization.</p>
+                <p>The button below takes you to Google's sign-in page and brings you straight back here when you are done.</p>
+                <p id="login-error" class="login-error" style="display:none;"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-login" class="btn btn-primary">Authorize Access</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

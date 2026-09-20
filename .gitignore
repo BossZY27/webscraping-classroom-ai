@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Credentials
+credentials/token.json
+credentials/client_secret.json
+
+# Database
+data/*.db
+data/*.sqlite3
+
+# Downloads
+downloads/
+
+# Logs
+*.log
+
+# Local-only and generated artifacts
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.csv
+*.xlsx
+*.db
+*.sqlite
+data/
+downloads/
