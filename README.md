@@ -1,175 +1,179 @@
-# 🎓 Google Classroom Scraper & AI Assistant
+# Classroom Automation & AI Assistant
 
-เว็บแอปพลิเคชันดูดไฟล์เอกสาร สไลด์ประกอบการสอน และการบ้านจาก **Google Classroom** อัตโนมัติ พร้อมระบบตั้งเวลาซิงค์ (Scheduler) และระบบ **AI สรุปเนื้อหาเอกสาร** ช่วยเตรียมสอบ
+เว็บแอปสำหรับเชื่อม Google Classroom และ Google Drive เพื่อเลือกติดตามรายวิชา ซิงค์ไฟล์ เก็บ metadata ป้องกันไฟล์ซ้ำ ตั้งเวลาซิงค์ และสรุปเนื้อหาเอกสารผ่าน AI provider ที่ผู้ใช้ตั้งค่า
 
----
+> สถานะ: MVP สำหรับรันบนเครื่อง การทำงานกับ Classroom/Drive ต้องใช้ Google OAuth credentials ของผู้ทดสอบเอง งานปรับปรุงเอกสารนี้ไม่เชื่อมบัญชีจริง ไม่ดาวน์โหลดเอกสารจริง และไม่เรียกบริการ AI แบบเสียเงิน
 
-## ✨ ฟีเจอร์หลัก (Key Features)
+## ความสามารถที่ตรวจสอบได้จากโค้ด
 
-- **🔄 Automated Scraper & Downloader**: ดึงไฟล์เอกสาร สไลด์ PDF และไฟล์แนบจากทุกวิชาใน Google Classroom ลงเครื่องโดยอัตโนมัติ พร้อมระบบตรวจจับไฟล์ซ้ำ (Deduplication via SHA256)
-- **🔐 Google OAuth 2.0 Web Flow**: ระบบเข้าสู่ระบบด้วยบัญชี Google (รองรับทั้งอีเมลส่วนตัวและอีเมลมหาวิทยาลัย) ใช้มาตรฐานความปลอดภัย PKCE และ Web-based redirect flow
-- **⏰ Scheduled Sync**: ตั้งเวลาให้ระบบตรวจสอบและดาวน์โหลดไฟล์ใหม่ประจำวัน/ประจำสัปดาห์อัตโนมัติด้วย Cron-like Background Scheduler (APScheduler)
-- **🤖 AI Document Summarizer**: สรุปเนื้อหาเอกสารการเรียนและสไลด์ PDF อัตโนมัติ รองรับ AI 3 ค่าย:
-  - **Google Gemini** (Gemini 1.5 Flash)
-  - **OpenAI** (GPT-4o / GPT-4o-mini)
-  - **Ollama** (Local AI ไม่เสียค่าใช้จ่าย เช่น Llama 3)
-- **📦 One-Click Export**: ส่งออกไฟล์ทั้งวิชาเป็นไฟล์ **ZIP** หรือรวมเนื้อหาเป็น **Markdown Text** เพื่อนำไปใช้อ่านทบทวนต่อใน **NotebookLM** หรือ ChatGPT ได้ทันที
-- **💻 Responsive Dark Theme Dashboard**: หน้าแดชบอร์ดจัดการคอร์ส ไฟล์ และตารางเวลา สวยงาม ใช้งานง่าย โหลดไว ไม่ต้องใช้ JavaScript Framework ซับซ้อน
+- Google OAuth 2.0 พร้อม PKCE และ token refresh
+- อ่านรายวิชาและไฟล์แนบผ่าน Google Classroom API กับ Drive API
+- ติดตามรายวิชาและสั่ง sync รายวิชาหรือทุกวิชา
+- ตรวจไฟล์ซ้ำด้วย SHA-256 และเก็บ metadata ใน SQLite
+- ตั้ง scheduled sync ผ่าน APScheduler
+- สกัดข้อความจาก PDF/TXT/Markdown และเชื่อม Gemini, OpenAI หรือ Ollama
+- ส่งออกไฟล์รายวิชาเป็น ZIP หรือรวมข้อความเป็น Markdown
+- Dashboard แบบ HTML/CSS/JavaScript และ REST API ผ่าน FastAPI
 
----
+## Workflow
 
-## 🛠️ สถาปัตยกรรมและเทคโนโลยี (Tech Stack)
+```mermaid
+flowchart LR
+    A[Google OAuth] --> B[Classroom API]
+    B --> C[เลือกวิชาที่ติดตาม]
+    C --> D[Drive Downloader]
+    D --> E[SHA-256 Deduplication]
+    E --> F[ไฟล์ใน downloads และ metadata ใน SQLite]
+    F --> G[AI Summary แบบเลือกใช้]
+    F --> H[ZIP หรือ Markdown Export]
+    I[APScheduler] --> C
+```
 
-| ส่วนประกอบ | เทคโนโลยีที่ใช้ | รายละเอียด |
-|---|---|---|
-| **Backend** | Python 3.10+ / FastAPI / Uvicorn | High-performance Asynchronous REST API |
-| **Database** | SQLite + SQLAlchemy ORM | จัดเก็บประวัติคอร์ส, รายการไฟล์, Logs, และการตั้งเวลา |
-| **Scheduler** | APScheduler | รันงานเบื้องหลัง (Background Task) สำหรับ Auto-sync |
-| **Google APIs** | Google Classroom API v1, Drive API v3 | ดึงข้อมูลวิชา โพสต์ และดาวน์โหลดไฟล์เอกสาร |
-| **Text & AI** | PyPDF2, Google Generative AI, OpenAI | ดึงข้อความจาก PDF และส่งให้ LLM วิเคราะห์สรุปเนื้อหา |
-| **Frontend** | Vanilla HTML5, Modern CSS, JavaScript ES6 | ออกแบบด้วย Glassmorphism + Dark Mode, Font Awesome Icons |
+## เทคโนโลยี
 
----
+| ส่วน | เทคโนโลยี |
+|---|---|
+| API | Python, FastAPI, Uvicorn |
+| Data | SQLite, SQLAlchemy |
+| Automation | APScheduler |
+| Integration | Google Classroom API, Google Drive API, OAuth 2.0 |
+| Document/AI | PyPDF2, Gemini, OpenAI, Ollama |
+| UI | HTML, CSS, JavaScript |
 
-## 📁 โครงสร้างโปรเจกต์ (Project Structure)
+## โครงสร้างโปรเจกต์
 
 ```text
-webscraping-classroom/
+webscraping-classroom-ai/
 ├── app/
-│   ├── api/                     # REST API Endpoints
-│   │   ├── routes_auth.py       # ระบบ Login / Callback / Logout
-│   │   ├── routes_courses.py    # จัดการคอร์สและสั่ง Sync รายวิชา
-│   │   ├── routes_files.py      # รายการไฟล์และดาวน์โหลด
-│   │   ├── routes_schedule.py   # จัดการตารางเวลาซิงค์
-│   │   ├── routes_ai.py         # จัดการ AI Settings และสั่งสรุปเนื้อหา
-│   │   └── routes_export.py     # ส่งออก ZIP และรวมเนื้อหาข้อความ
-│   ├── auth/
-│   │   └── google_oauth.py      # Core OAuth 2.0 (PKCE, Token Refresh, Callback)
-│   ├── scraper/
-│   │   ├── classroom_api.py     # เชื่อมต่อ Google Classroom ดึงโพสต์และลิงก์
-│   │   ├── drive_downloader.py  # เชื่อมต่อ Google Drive ดาวน์โหลดไฟล์
-│   │   └── dedup.py             # ตรวจสอบไฟล์ซ้ำด้วย Hash
-│   ├── scheduler/
-│   │   └── job_manager.py       # จัดการ Cron jobs สำหรับการซิงค์ไฟล์
-│   ├── summarizer/
-│   │   ├── text_extractor.py    # สกัดข้อความจาก PDF / TXT / MD
-│   │   └── ai_client.py         # เชื่อมต่อ Gemini, OpenAI, Ollama
-│   ├── static/                  # Web Dashboard UI
-│   │   ├── index.html           # โครงสร้างหน้าเว็บ
-│   │   ├── style.css            # ธีม Dark Mode & CSS Variables
-│   │   └── app.js               # Frontend Logic & API Calling
-│   ├── config.py                # Pydantic Settings & Environment Loader
-│   ├── database.py              # SQLite Schema & DB Session
-│   └── main.py                  # จุดเริ่มต้นรัน FastAPI & Mount Static Files
-├── credentials/                 # (Gitignored) ไฟล์รับรองความปลอดภัย
-│   ├── client_secret.json       # OAuth 2.0 Client Secret จาก Google Cloud
-│   └── token.json               # User Access & Refresh Token (สร้างอัตโนมัติ)
-├── data/                        # โฟลเดอร์เก็บฐานข้อมูล SQLite (classroom.db)
-├── downloads/                   # โฟลเดอร์จัดเก็บไฟล์ที่ดาวน์โหลดมาตามชื่อวิชา
-│   └── exports/                 # โฟลเดอร์เก็บไฟล์ ZIP ที่ Export
-├── .env.example                 # ตัวอย่างการตั้งค่า Environment Variables
-├── .gitignore                   # กำหนดไฟล์ที่ไม่ต้องติดตามใน Git
-├── requirements.txt             # รายการ Python Packages ที่ต้องติดตั้ง
-└── README.md                    # เอกสารคู่มือการใช้งานโปรเจกต์
+│   ├── api/             # auth, courses, files, schedules, AI และ export routes
+│   ├── auth/            # Google OAuth flow
+│   ├── scraper/         # Classroom/Drive integration และ deduplication
+│   ├── scheduler/       # scheduled sync jobs
+│   ├── summarizer/      # text extraction และ AI providers
+│   ├── static/          # dashboard
+│   ├── config.py
+│   ├── database.py
+│   └── main.py
+├── credentials/         # gitignored; client_secret.json และ token.json
+├── data/                # SQLite database
+├── downloads/           # ไฟล์ที่ซิงค์และ export
+├── .env.example
+└── requirements.txt
 ```
 
----
+## ติดตั้งบนเครื่อง
 
-## 🚀 ขั้นตอนการติดตั้งและเริ่มต้นใช้งาน (Getting Started)
+### 1. เตรียม Python environment
 
-### 1. โคลนโปรเจกต์และสร้าง Virtual Environment
-
-```bash
-# 1. เข้าสู่โฟลเดอร์โปรเจกต์
-cd "webscraping classroom"
-
-# 2. สร้าง Virtual Environment (แนะนำ)
+```powershell
+git clone https://github.com/BossZY27/webscraping-classroom-ai.git
+cd webscraping-classroom-ai
 python -m venv .venv
-
-# 3. เปิดใช้งาน Environment
-# บน Windows PowerShell:
-.venv\Scripts\Activate.ps1
-# บน macOS / Linux:
-source .venv/bin/activate
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
 ```
 
-### 2. ติดตั้ง Dependencies
+สำหรับ macOS/Linux ให้ activate ด้วย `source .venv/bin/activate`
 
-```bash
-pip install -r requirements.txt
-```
+### 2. เตรียม Google OAuth
 
-### 3. เตรียม Google Cloud OAuth Credentials
+1. สร้าง project ใน Google Cloud Console
+2. เปิด Google Classroom API และ Google Drive API
+3. ตั้ง OAuth consent screen และเพิ่มบัญชีทดสอบของตนเอง
+4. สร้าง OAuth client ชนิด **Web application**
+5. เพิ่ม redirect URI `http://127.0.0.1:8000/api/auth/callback`
+6. ดาวน์โหลด JSON แล้วบันทึกเป็น `credentials/client_secret.json`
 
-1. ไปที่ [Google Cloud Console](https://console.cloud.google.com/)
-2. สร้างโปรเจกต์ใหม่ (หรือใช้โปรเจกต์เดิม)
-3. ไปที่ **APIs & Services > Library** แล้วกดเปิดใช้งาน (Enable):
-   - **Google Classroom API**
-   - **Google Drive API**
-4. ไปที่ **APIs & Services > OAuth consent screen**:
-   - เลือกประเภท **External**
-   - ตั้งชื่อแอป และใส่อีเมลติดต่อ
-   - ในแท็บ **Test users** เพิ่มอีเมล Google ที่จะใช้ล็อกอิน (เช่น อีเมลนักศึกษา หรือ Gmail ส่วนตัว)
-5. ไปที่ **APIs & Services > Credentials**:
-   - กด **Create Credentials > OAuth client ID**
-   - Application type: เลือก **Web application** (หรือ **Desktop app**)
-   - หากเลือก Web application ให้เพิ่ม **Authorized redirect URIs**:
-     ```
-     http://127.0.0.1:8000/api/auth/callback
-     ```
-   - ดาวน์โหลดไฟล์ JSON และนำมาวางไว้ที่:
-     ```
-     credentials/client_secret.json
-     ```
+ไฟล์ credentials และ token เป็นข้อมูลลับและถูกแยกออกจาก Git ผ่าน `.gitignore` ห้ามนำค่าจริงขึ้น repository
 
-### 4. รันเซิร์ฟเวอร์ (Start the Server)
+### 3. Environment variables
 
-```bash
+ค่าต่อไปนี้ตรงกับ `app/config.py` และ `.env.example`:
+
+| ตัวแปร | ค่าเริ่มต้น/หน้าที่ |
+|---|---|
+| `GOOGLE_CLIENT_ID` | ประกาศไว้ใน config; OAuth flow ปัจจุบันยังอ่านค่าจากไฟล์ JSON |
+| `GOOGLE_CLIENT_SECRET` | ประกาศไว้ใน config; OAuth flow ปัจจุบันยังอ่านค่าจากไฟล์ JSON |
+| `GOOGLE_PROJECT_ID` | ประกาศไว้ใน config; ยังไม่ถูกใช้ใน OAuth flow ปัจจุบัน |
+| `OAUTH_REDIRECT_URI` | callback URL; ค่าเริ่มต้นชี้มาที่พอร์ต 8000 |
+| `DATABASE_URL` | SQLite connection string |
+| `HOST` | host ที่ Uvicorn bind |
+| `PORT` | port ของเว็บ |
+
+OAuth implementation ปัจจุบันอ่าน client configuration จาก `credentials/client_secret.json` ส่วนค่า `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` และ `GOOGLE_PROJECT_ID` มีอยู่ใน settings แต่ยังไม่ถูกนำไปสร้าง flow โดยตรง
+
+### 4. เริ่มระบบ
+
+```powershell
 python -m app.main
 ```
-หรือใช้ Uvicorn:
-```bash
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+หรือ:
+
+```powershell
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 5. เปิดใช้งาน Dashboard
+เปิด:
 
-เปิดเว็บเบราว์เซอร์แล้วไปที่:
-👉 **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
+- Dashboard: `http://127.0.0.1:8000/`
+- API documentation: `http://127.0.0.1:8000/docs`
+- Health check: `http://127.0.0.1:8000/api/health`
 
-1. กดปุ่ม **Authorize Access** เพื่อล็อกอินด้วยบัญชี Google
-2. เลือกวิชาที่ต้องการ และกด **Track** เพื่อเปิดการติดตาม
-3. กดปุ่ม **Sync Now** เพื่อเริ่มดาวน์โหลดไฟล์เอกสาร
-4. ไปที่แท็บ **Files** เพื่อเปิดดู ดาวน์โหลด หรือกดให้ **AI Summarize** สรุปเนื้อหาได้ทันที
+## ตัวอย่าง Workflow
 
----
+ตัวอย่างนี้เป็นสถานการณ์สังเคราะห์ ไม่ได้อ้างอิงข้อมูลจากห้องเรียนจริง:
 
-## 📡 API Endpoints (Swagger UI)
+1. ผู้ใช้เชื่อมบัญชี Google test user
+2. เลือกวิชา “Automation Fundamentals” แล้วเปิดการติดตาม
+3. สั่ง sync; ระบบตรวจไฟล์แนบและ hash ก่อนบันทึก
+4. เปิดรายการไฟล์ที่ดาวน์โหลดแล้ว
+5. เลือกไฟล์ PDF เพื่อสรุป หรือ export เนื้อหาของรายวิชาเป็น Markdown
 
-คุณสามารถเปิดดู Interactive API Documentation ได้ที่:
-👉 **`http://127.0.0.1:8000/docs`**
+ตัวอย่าง health response ที่สอดคล้องกับ route:
 
-| Method | Endpoint | คำอธิบาย |
+```json
+{
+  "status": "ok",
+  "version": "1.0.0"
+}
+```
+
+## API ที่ตรวจพบ
+
+| Method | Endpoint | หน้าที่ |
 |---|---|---|
-| `GET` | `/api/auth/status` | ตรวจสอบสถานะการเชื่อมต่อ Google |
-| `GET` | `/api/auth/login` | เริ่มกระบวนการ Login (Redirect ไป Google Consent) |
-| `GET` | `/api/auth/callback` | Callback URL รับ Authorization Code |
-| `POST` | `/api/auth/logout` | ออกจากระบบและล้าง Token |
-| `GET` | `/api/courses` | รายชื่อวิชาทั้งหมดใน Google Classroom |
-| `POST` | `/api/courses/{id}/track` | เปิด/ปิดการติดตามวิชา |
-| `POST` | `/api/courses/{id}/sync` | สั่ง Sync ดาวน์โหลดไฟล์ของวิชาทันที |
-| `GET` | `/api/files` | รายการไฟล์ที่ดาวน์โหลดแล้วทั้งหมด |
-| `GET` | `/api/files/{id}/download` | ดาวน์โหลดไฟล์ตรงจากเครื่อง |
-| `POST` | `/api/ai/summarize` | สั่งให้ AI สรุปเนื้อหาไฟล์ที่ระบุ |
-| `GET` | `/api/export/{course_id}/zip` | ส่งออกไฟล์ทั้งวิชาเป็นไฟล์ ZIP |
+| `GET` | `/api/health` | ตรวจสถานะ service |
+| `GET` | `/api/auth/status` | ตรวจสถานะ Google OAuth |
+| `GET` | `/api/auth/login` | เริ่ม OAuth flow |
+| `GET` | `/api/auth/callback` | รับ OAuth callback |
+| `POST` | `/api/auth/logout` | ล้าง token |
+| `GET` | `/api/courses/` | รายการรายวิชา |
+| `POST` | `/api/courses/sync/all` | sync ทุกวิชาที่ติดตาม |
+| `POST` | `/api/courses/{course_id}/track` | เปิด/ปิดการติดตาม |
+| `POST` | `/api/courses/{course_id}/sync` | sync รายวิชา |
+| `GET` | `/api/files/` | รายการไฟล์ |
+| `GET` | `/api/files/{file_id}/download` | ดาวน์โหลดไฟล์ที่บันทึกไว้ |
+| `GET/POST` | `/api/ai/settings` | อ่านหรือบันทึก AI settings |
+| `POST` | `/api/ai/summarize/{file_id}` | สรุปไฟล์ที่ระบุ |
+| `GET` | `/api/ai/summary/{file_id}` | อ่านผลสรุปเดิม |
+| `GET` | `/api/export/{course_id}/zip` | export รายวิชาเป็น ZIP |
+| `GET` | `/api/export/{course_id}/text` | export ข้อความรวมเป็น Markdown |
+| `GET/POST/DELETE` | `/api/schedule/...` | จัดการ scheduled sync |
 
----
+## ตรวจคุณภาพแบบไม่ใช้บัญชีจริง
 
-## 💡 หมายเหตุและการแก้ปัญหา (FAQ / Troubleshooting)
+```powershell
+python -m compileall app
+```
 
-- **ปัญหา Token หมดอายุ (Token Expired)**:
-  ในสถานะ Testing Mode ของ Google Cloud OAuth ตัว Refresh Token จะมีอายุ 7 วัน หากไม่ได้เข้าใช้นานจน Token หมดอายุ หน้าเว็บจะแจ้งเตือน ให้กดปุ่ม **Authorize Access** เพื่อต่ออายุ Token ใหม่ได้ทันที
-- **ปัญหา Google แจ้งเตือน "Google hasn't verified this app"**:
-  เนื่องจากเป็นแอปที่พัฒนาขึ้นเองและอยู่ใน Testing Mode ให้กดคลิก **Advanced > Go to Classroom Scraper (unsafe)** เพื่อดำเนินการต่อ
-- **การตั้งค่า AI Provider**:
-  สามารถเข้าไปที่แท็บ **AI Settings** ในหน้าเว็บเพื่อใส่ Gemini API Key หรือ OpenAI API Key หรือเลือกเชื่อมต่อกับ Ollama ที่รันอยู่ในเครื่องได้โดยตรง
+การทดสอบ OAuth, Classroom, Drive และ AI provider เป็น integration test ที่ต้องใช้บัญชีและ credentials ภายนอก จึงไม่ได้รวมไว้ในคำสั่งตรวจแบบ offline
+
+## ข้อจำกัดและความปลอดภัย
+
+- ใช้เฉพาะบัญชีทดสอบที่เพิ่มใน OAuth consent screen และอนุญาต scope ที่จำเป็น
+- ห้ามแชร์ `credentials/client_secret.json`, `credentials/token.json`, `.env`, ฐานข้อมูล หรือไฟล์ที่ดาวน์โหลดจากห้องเรียน
+- API และ dashboard ออกแบบสำหรับรันบนเครื่อง ยังไม่มีมาตรการ production เช่น user isolation, rate limiting และ centralized secret management
+- คุณภาพการสรุปขึ้นกับข้อความที่สกัดได้และ AI provider ที่เลือก
+- ยังไม่มี automated integration test สำหรับบริการภายนอก
